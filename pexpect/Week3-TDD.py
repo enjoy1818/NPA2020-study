@@ -55,9 +55,11 @@ def main():
 
     print(router_1.list_interface())
 
-    connect("G1/0/1", router_1, "G1/0/1", router_2)
+    connect("G1/0/2", router_1, "G1/0/1", router_2)
 
     print(router_1.neigbors_list())
+    print(router_2.neigbors_list())
+
 
 def connect(localInterface, localhost, remoteInterface, remoteHost):
 
