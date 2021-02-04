@@ -9,11 +9,20 @@ class Router:
         self.ipAddress = ipAddress
         self.hostName = hostName
         self.vendor = vendor
-        self.interface = []
+        self.interface = {}
         self.neighbor = {}
+        self.routingTable = []
+
+    def routing_table_list(self):
+        """Listing routing tables"""
+        return self.routingTable
+    def add_route(self, destinationNetwork, nextHop):
+        """Add a route to routing table"""
+        
+        
     def add_interface(self, interface):
         """Add interface to interface dictionary"""
-        self.interface.append(interface)
+        self.interface[interface] = {}
     
     def interface_list(self):
         """Listing interface of router"""
@@ -24,6 +33,7 @@ class Router:
         return self.neighbor
     def validate_interface(self, interface):
         """validate interface before take any action"""
+        print(self.interface)
         return interface in self.interface
     def connect_to(self, localInterface, remoteInterface, remoteHost):
         """Connect routers"""
@@ -58,8 +68,8 @@ def main():
 
     # connect("G1/0/2", router_1, "G1/0/1", router_2)
 
-    # # print(router_1.neigbors_list())
-    # # print(router_2.neigbors_list())
+    # print(router_1.neigbors_list())
+    # print(router_2.neigbors_list())
 
 
 def connect(localInterface, localhost, remoteInterface, remoteHost):
