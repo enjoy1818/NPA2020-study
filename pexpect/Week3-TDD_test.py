@@ -6,7 +6,6 @@ class Router_Test(unittest.TestCase):
     def test_interface_list(self):
         router = Router('1.1.1.1', 'Router-1', 'cisco')
         router.add_interface("G1/0/1")
-        # print(router.interface_list())
         self.assertEqual(router.interface_list(), {'G1/0/1':{}})
     def test_validate_interface(self):
         router = Router('1.1.1.1', 'Router-1', 'cisco')
@@ -31,6 +30,17 @@ class Router_Test(unittest.TestCase):
         self.assertDictEqual(router_1.neigbors_list(), expectedResult)
     def test_routing_table_list(self):
         router_1 = Router('1.1.1.1', 'Router-1', "HPE")
-        self.assertListEqual(router_1.routing_table_list(), [])
+        self.assertDictEqual(router_1.routing_table_list(), {})
+    def test_disconnect(self):
+        router_1 = Router('1.1.1.1', 'Router-1', 'cisco')
+        router_2 = Router('2.2.2.2.', "Router-2", "cisco")
+        router_1.add_interface("G1/0/1")
+        router_2.add_interface("G1/0/2")
+        connect("G1/0/1", router_1, "G1/0/2", router_2)
+        response = disconnect("G1/0/1", router_1,"G1/0/2", router_2)
+        self.assertTrue(response)
+        connect("G1/0/1", router_1, "G1/0/2", router_2)
+        response = disconnect("G1/0/1", router_1, "G1/0/1", router_2)
+        self.assertFalse(response)
 if __name__=='__main__':
     unittest.main()
