@@ -1,3 +1,4 @@
+import math
 class Router:
     """Represent router in environment"""
 
@@ -13,9 +14,18 @@ class Router:
     def routing_table_list(self):
         """Listing routing tables"""
         return self.routingTable
-    # def add_route(self, destinationNetwork, nextHop):
-    #     """Add a route to routing table"""
+
+    def add_route(self, destinationNetwork, subnetMask, administrativeDistance, nextHopAddress=None, localInterface=None):
+        """Add a route to routing table"""
+        if nextHopAddress != None:
+            self.routingTable[destinationNetwork]["SubnetMask"] = subnetMask
+            
+        elif localInterface != None:
+
+        else:
+            return False
         
+
     def information(self):
         """Return a list of router's information"""
         return [self.hostName, self.ipAddress, self.vendor]
@@ -23,7 +33,37 @@ class Router:
     def add_interface(self, interface):
         """Add interface to interface dictionary"""
         self.interface[interface] = {}
-    
+    def set_interface_address(self, localInterface, ipAddress, subnetMask):
+        """Setup an ip address for interface"""
+        if self.validate_ip_address(ipAddress, subnetMask) and self.validate_interface(localInterface):
+            self.interface[localInterface]["Address"] = ipAddress
+            self.interface[localInterface]["SubnetMask"] = subnetMask
+            return True
+        else:
+            return False
+    def validate_ip_address(self, ipAddress, subnetMask):
+        """Validate the ip address"""
+        ipAddress = ipAddress.split('.')
+        subnetMask = subnetMask.split('.')
+        if len(ipAddress) != 4:
+            return False
+        for address in range(0, len(ipAddress)-1):
+            try:
+                tempIpAddress = int(ipAddress[address])
+                tempSubnetMask = int(subnetMask[address])
+            except:
+                return False
+            else:
+                if (tempIpAddress > 255) or (tempIpAddress <= 0) :
+                    return False
+                elif tempSubnetMask == 255:
+                    continue
+                elif ((tempIpAddress // (256 - tempSubnetMask)) * (256 - tempSubnetMask) + \
+                    (256 - tempSubnetMask) - 1) == tempIpAddress:
+                    return False
+                else:
+                    continue
+        return True
     def interface_list(self):
         """Listing interface of router"""
         return self.interface
@@ -38,7 +78,8 @@ class Router:
     def connect_to(self, localInterface, remoteInterface, remoteHost):
         """Connect routers"""
         if self.validate_interface(localInterface):
-            self.add_neighbor(neighborName=remoteHost, localInterface=localInterface, remoteInterface=remoteInterface)
+            self.add_neighbor(neighborName=remoteHost, localInterface=localInterface, \
+            remoteInterface=remoteInterface)
             return True
         else:
             return False
@@ -93,19 +134,15 @@ def main():
     router_2 = Router("2.2.2.2", "router2", "cisco")
     router_2.add_interface("G1/0/1")
     router_2.add_interface("G1/0/2")
-    
+    router_3 = Router("3.3.3.3", "router3", "Aruba")
 
     # # print(router_1.interface_list())
 
     print(connect("G1/0/2", router_1, "G1/0/1", router_2))
-
-    print(router_1.neigbors_list())
-    print(router_2.neigbors_list())
-
+    print(connect("G1/1", router_3, "G1/0/2", router_1))
     print(disconnect("G1/0/2", router_1,"G1/0/1", router_2))
 
-    print(router_1.neigbors_list())
-    print(router_2.neigbors_list())
+    print(router_3.neigbors_list(), router_2.neigbors_list(), router_1.neigbors_list())
 
 
 def connect(localInterface, localhost, remoteInterface, remoteHost):
@@ -119,11 +156,13 @@ def connect(localInterface, localhost, remoteInterface, remoteHost):
 
 def disconnect(localInterface, localHost,remoteInterface, remoteHost):
     
-    if localHost.is_connected_to(remoteHost.hostName, localInterface) and remoteHost.is_connected_to(localHost.hostName, remoteInterface):
+    if localHost.is_connected_to(remoteHost.hostName, localInterface) and \
+        remoteHost.is_connected_to(localHost.hostName, remoteInterface):
         res1 = localHost.disconnect_to(localInterface, remoteHost.hostName)
         res2 = remoteHost.disconnect_to(remoteInterface, localHost.hostName)
         return res1 and res2
     return False
     
-main()
+if __name__=='__main__':
+    main()
     

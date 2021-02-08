@@ -42,5 +42,11 @@ class Router_Test(unittest.TestCase):
         connect("G1/0/1", router_1, "G1/0/2", router_2)
         response = disconnect("G1/0/1", router_1, "G1/0/1", router_2)
         self.assertFalse(response)
+    def test_interface_address(self):
+        router_1 = Router("1.1.1.1", "router_1", "Aruba")
+        router_1.add_interface("G1/0/1")
+        response = router_1.set_interface_address("G1/0/1", "192.168.1.1", "255.255.255.0")
+        self.assertTrue(response)
+        self.assertDictEqual(router_1.interface_list(), {"G1/0/1":{"Address":"192.168.1.1", "SubnetMask":"255.255.255.0"}})
 if __name__=='__main__':
     unittest.main()
