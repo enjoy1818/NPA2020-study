@@ -1,3 +1,4 @@
+from logging import raiseExceptions
 import unittest
 from RouterCode import *
 # from RouterCode import Router
@@ -48,5 +49,21 @@ class Router_Test(unittest.TestCase):
         response = router_1.set_interface_address("G1/0/1", "192.168.1.1", "255.255.255.0")
         self.assertTrue(response)
         self.assertDictEqual(router_1.interface_list(), {"G1/0/1":{"Address":"192.168.1.1", "SubnetMask":"255.255.255.0"}})
+    def test_add_route(self):
+        router_1 = Router("1.1.1.1", "router_1", "Aruba")
+        router_1.add_interface("G1/0/1")
+        router_1.set_interface_address("G1/0/1","192.168.1.1", "255.255.255.0")
+        self.assertDictEqual(router_1.routing_table_list(), {"192.168.1.0":{"SubnetMask":"255.255.255.0",\
+        "NextHop":"G1/0/1", "AdministrativeDistance":1}})
+
+    def test_calculate_network(self):
+        router_1 = Router("1.1.1.1", "router_1", "Aruba")
+        response = router_1.calculate_network("192.168.1.1", "255.255.255.0")
+        self.assertEqual(response, "192.168.1.0")
+
+    def test_delete_route(self):
+        router_1 = Router("1.1.1.1", "router_1", "Aruba")
+        response = router_1.calculate_network("192.168.1.1", "255.255.255.0")
+        self.assertEqual(response, "192.168.1.0")
 if __name__=='__main__':
     unittest.main()
