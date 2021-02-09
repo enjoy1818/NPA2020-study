@@ -63,7 +63,10 @@ class Router_Test(unittest.TestCase):
 
     def test_delete_route(self):
         router_1 = Router("1.1.1.1", "router_1", "Aruba")
-        response = router_1.calculate_network("192.168.1.1", "255.255.255.0")
-        self.assertEqual(response, "192.168.1.0")
+        router_1.add_route("192.168.1.0","255.255.255.0", 20, nextHopAddress="10.0.0.1")
+        self.assertDictEqual(router_1.routing_table_list(), {"192.168.1.0":{"SubnetMask":"255.255.255.0",\
+        "NextHop":"10.0.0.1", "AdministrativeDistance":20}})
+        router_1.delete_route("192.168.1.0","255.255.255.0")
+        self.assertDictEqual(router_1.routing_table_list(), {})
 if __name__=='__main__':
     unittest.main()
