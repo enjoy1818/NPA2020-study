@@ -153,5 +153,8 @@ dmypy.json
 .history
 .ionide
 #Netmiko Local Files
-.Lab-Netmiko/DeviceConfiguration
+
+Lab-Netmiko/DeviceConfiguration
+
+
 # End of https://www.toptal.com/developers/gitignore/api/python,visualstudiocode

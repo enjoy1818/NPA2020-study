@@ -1,10 +1,9 @@
-
 Building configuration...
 
   
-Current configuration : 3435 bytes
+Current configuration : 3416 bytes
 !
-! Last configuration change at 19:03:07 UTC Fri Feb 12 2021 by admin
+! Last configuration change at 19:44:14 UTC Sun Mar 7 2021 by admin
 !
 version 15.7
 service timestamps debug datetime msec
@@ -35,7 +34,8 @@ no ip icmp rate-limit unreachable
 !
 !
 !
-ip vrf jubby
+ip vrf jab
+ rd 300:69
 !
 !
 !
@@ -69,6 +69,10 @@ ip tcp synwait-time 5
 !
 !
 !
+!
+interface Loopback69
+ ip vrf forwarding jab
+ ip address 172.20.179.7 255.255.255.240
 !
 interface GigabitEthernet0/0
  ip address 172.31.179.7 255.255.255.240
@@ -104,11 +108,6 @@ no ip http server
 no ip http secure-server
 ip route 0.0.0.0 0.0.0.0 172.31.179.1
 ip ssh version 2
-!
-kron policy-list rollback-backup
- cli copy run.bkup run
- cli copy run.bkup run
- cli copy run.bkup run
 !
 ipv6 ioam timestamp
 !
@@ -154,7 +153,6 @@ line aux 0
  logging synchronous
 line vty 0 4
  login local
- length 0
  transport input telnet ssh
 !
 no scheduler allocate
