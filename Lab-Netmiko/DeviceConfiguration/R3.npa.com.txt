@@ -1,9 +1,9 @@
 Building configuration...
 
   
-Current configuration : 3320 bytes
+Current configuration : 3416 bytes
 !
-! Last configuration change at 16:50:41 UTC Fri Feb 12 2021 by admin
+! Last configuration change at 19:45:42 UTC Sun Mar 7 2021 by admin
 !
 version 15.7
 service timestamps debug datetime msec
@@ -34,7 +34,8 @@ no ip icmp rate-limit unreachable
 !
 !
 !
-ip vrf Data
+ip vrf jab
+ rd 300:69
 !
 !
 !
@@ -68,6 +69,10 @@ ip tcp synwait-time 5
 !
 !
 !
+!
+interface Loopback69
+ ip vrf forwarding jab
+ ip address 172.20.179.6 255.255.255.240
 !
 interface GigabitEthernet0/0
  ip address 172.31.179.6 255.255.255.240

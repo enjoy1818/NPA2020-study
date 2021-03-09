@@ -1,9 +1,8 @@
-
 Building configuration...
 
-Current configuration : 3582 bytes
+Current configuration : 3678 bytes
 !
-! Last configuration change at 17:08:14 UTC Fri Feb 12 2021
+! Last configuration change at 19:44:15 UTC Sun Mar 7 2021 by admin
 !
 version 15.2
 service timestamps debug datetime msec
@@ -26,6 +25,9 @@ no aaa new-model
 !
 !
 no ip routing
+!
+ip vrf jab
+ rd 300:69
 !
 !
 !
@@ -51,6 +53,9 @@ spanning-tree extend system-id
 !
 !
 !
+!
+interface Loopback69
+ ip address 172.20.179.3 255.255.255.240
 !
 interface GigabitEthernet0/0
  switchport access vlan 99
