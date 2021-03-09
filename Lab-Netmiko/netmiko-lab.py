@@ -67,6 +67,7 @@ class managedDevice:
                 connection.send_command(command, expect_string=r'#')
             connection.disconnect()
             return True
+            
     def remove_configuration_safeguard(self, interval=2):
         removeScript = ["conf t", " no kron occur rollback in {} oneshot".format(str(interval).zfill(3)), "no kron policy-list rollback-backup"]
         try:
@@ -78,6 +79,7 @@ class managedDevice:
                 connection.send_command(command, expect_string=r'#')
             connection.disconnect()
             return True
+
     def configure_device(self, designatedCommand):
         """Configure Remote Device"""
         if self.rollback_configuration_safeguard():
@@ -95,6 +97,7 @@ class managedDevice:
                 return True
         else:
             return False
+
     def interface_discovery(self):
         connection = self.open_connection()
         result = connection.send_command("show ip int brief", expect_string=r'#')
@@ -106,6 +109,7 @@ class managedDevice:
             self.interface[interface_list[0]]["Status"] = interface_list[4]+" "+interface_list[5]
         #  [self.interface[interface] for interface in result.split('\n')[1:]]
         return self.interface
+
     def enable_routing(self, routing_protocol, area=None, autonomous_system=None, vrf=None, default_route=False):
         self.interface_discovery()
         if routing_protocol == "OSPF":
@@ -115,12 +119,7 @@ class managedDevice:
                 return False
             [connection.send_command(command, expect_string=r"#") for command in ["conf t", "router ospf 1 vrf jab", "end"]]
             connection.disconnect()
-        if default_route:
-            connection = self.open_connection()
-            [connection.send_command(command, expect_string=r'#') for command in ["conf t", "router ospf 1 vrf jab", "default-information originate"]]
-            # connection.send_command("conf t\n")
         for interface in self.interface:
-            # print(interface)
             if self.interface[interface]["Address"] == "unassigned":
                 continue
             else:
@@ -128,6 +127,7 @@ class managedDevice:
                 [connection.send_command(command, expect_string=r"#") for command in ["conf t","int {}".format(interface),"ip ospf 1 area 0"]]
                 connection.disconnect()
         return True
+
     def label_interface(self):
         connection = self.open_connection()
         devices = connection.send_command("show cdp neighbor").split("\n")
@@ -135,7 +135,7 @@ class managedDevice:
             # print(devices[line_index].split())
             neighbor = devices[line_index].split()
             connection = self.open_connection()
-            [connection.send_command(command, expect_string=r'#') for command in ["conf t", "int {}".format(neighbor[1]+neighbor[2])]]
+            [connection.send_command(command, expect_string=r'#') for command in ["conf t", "int {}".format(neighbor[1]+neighbor[2]), "desc connect to {} of {}".format(neighbor[6]+neighbor[7], neighbor[0].split(".")[0])]]
         # return devices
     def enable_cdp(self):
         connection = self.open_connection()
@@ -218,63 +218,57 @@ def main():
     managedDeviceDatabase["S0"] = managedDevice(managementAddress, "S0.npa.com", vendor="Cisco")
     for device in devices:
         managedDeviceDatabase[device.split(".")[0]] = managedDevice(devices[device]["ManagementAddress"], device, vendor="Cisco")
-        
-
-    # print(managedDeviceDatabase["R1"].interface_discovery())
 
     # Setup vrf and loopback interface
-    # print(send_command("conf t\nip vrf jab\nrd 300:69\n", managedDeviceDatabase))
-    # print([managedDeviceDatabase[device].health_check() for device in managedDeviceDatabase])
-    # print(send_command("conf t\nint lo 69\nip vrf forwarding jab\n", managedDeviceDatabase))
-    # with concurrent.futures.ThreadPoolExecutor() as executor:
-        # workers = {executor.submit(lambda x: send_command(*x), ["conf t\nint lo69\nip vrf forwarding jab\nip address 172.20.179.{} {}"\
-        # .format(managedDeviceDatabase[device].managementAddress.split(".")[3], "255.255.255.240"), managedDeviceDatabase[device]]) for device in managedDeviceDatabase}
-    # print([worker.result() for worker in workers])
+    print(send_command("conf t\nip vrf jab\nrd 300:69\n", managedDeviceDatabase))
+    print([managedDeviceDatabase[device].health_check() for device in managedDeviceDatabase])
+    print(send_command("conf t\nint lo 69\nip vrf forwarding jab\n", managedDeviceDatabase))
+    with concurrent.futures.ThreadPoolExecutor() as executor:
+        workers = {executor.submit(lambda x: send_command(*x), ["conf t\nint lo69\nip vrf forwarding jab\nip address 172.20.179.{} {}"\
+        .format(managedDeviceDatabase[device].managementAddress.split(".")[3], "255.255.255.240"), managedDeviceDatabase[device]]) for device in managedDeviceDatabase}
 
     # Increase SSH concurrent connection   
-    # send_command("conf t\nline vty 0 20\ntransport input ssh\nlogin local\n", managedDeviceDatabase)
+    send_command("conf t\nline vty 0 20\ntransport input ssh\nlogin local\n", managedDeviceDatabase)
     
     # Securing SSH 
-    # print(send_command("conf t\nip access-list standard ManagementAddress\npermit 172.31.179.0 0.0.0.15\npermit 10.253.190.0 0.0.0.255\n", managedDeviceDatabase))
-    # print(send_command("conf t\nline vty 0 20\naccess-class ManagementAddress in vrf-also\n", managedDeviceDatabase))
+    print(send_command("conf t\nip access-list standard ManagementAddress\npermit 172.31.179.0 0.0.0.15\npermit 10.253.190.0 0.0.0.255\n", managedDeviceDatabase))
+    print(send_command("conf t\nline vty 0 20\naccess-class ManagementAddress in vrf-also\n", managedDeviceDatabase))
 
     # Configure interface
-    # with concurrent.futures.ThreadPoolExecutor() as executor:
-    #     executor.submit(lambda x: send_command(*x), ["conf t\nvlan 69\nno shut\nname vrf-jab\n", managedDeviceDatabase["S1"]])
-    #     executor.submit(lambda x: send_command(*x), ["conf t\nint range g0/1-2\nsw tr enc dot\nsw mode tr\n", managedDeviceDatabase["S1"]])
-    #     executor.submit(lambda x: send_command(*x), ["conf t\nint g1/0\nsw acc vlan 69\n", managedDeviceDatabase["S1"]])
-    #     executor.submit(lambda x: send_command(*x), ["conf t\nvlan 69\nno shut\nname vrf-jab\n", managedDeviceDatabase["S2"]])
-    #     executor.submit(lambda x: send_command(*x), ["conf t\nint range g0/1-3\nsw tr enc dot\nsw mode tr\n", managedDeviceDatabase["S2"]])
-    #     executor.submit(lambda x: send_command(*x), ["conf t\nint g0/1.69\nip vrf forwarding jab\nenc dot 69\nip address 172.31.179.17 255.255.255.240\nint g0/1\nno shut\n", managedDeviceDatabase["R1"]])
-    #     executor.submit(lambda x: send_command(*x), ["conf t\nint g0/2.69\nip vrf forwarding jab\nenc dot 69\nip address 172.31.179.33 255.255.255.240\nint g0/2\nno shut\n", managedDeviceDatabase["R1"]])
-    #     executor.submit(lambda x: send_command(*x), ["conf t\nint g0/1.69\nip vrf forwarding jab\nenc dot 69\nip address 172.31.179.18 255.255.255.240\nint g0/1\nno shut\n", managedDeviceDatabase["R2"]])
-    #     executor.submit(lambda x: send_command(*x), ["conf t\nint g0/2.69\nip vrf forwarding jab\nenc dot 69\nip address 172.31.179.49 255.255.255.240\nint g0/2\nno shut\n", managedDeviceDatabase["R2"]])
-    #     executor.submit(lambda x: send_command(*x), ["conf t\nint g0/1.69\nip vrf forwarding jab\nenc dot 69\nip address 172.31.179.34 255.255.255.240\nint g0/1\nno shut\n", managedDeviceDatabase["R3"]])
-    #     executor.submit(lambda x: send_command(*x), ["conf t\nint g0/2.69\nip vrf forwarding jab\nenc dot 69\nip address 172.31.179.50 255.255.255.240\nint g0/2\nno shut\n", managedDeviceDatabase["R3"]])
-    #     executor.submit(lambda x: send_command(*x), ["conf t\nint g0/3.69\nip vrf forwarding jab\nenc dot 69\nip address 172.31.179.65 255.255.255.240\nint g0/3\nno shut\n", managedDeviceDatabase["R3"]])
-    #     executor.submit(lambda x: send_command(*x), ["conf t\nint g0/1.69\nip vrf forwarding jab\nenc dot 69\nip address 172.31.179.66 255.255.255.240\nint g0/1\nno shut\n", managedDeviceDatabase["R4"]])
-        # executor.submit(lambda x: send_command(*x), ["conf t\nint g0/1.69\nip vrf forwarding jab\nenc dot 69\nip address 172.31.179.67 255.255.255.240\nint g0/1.69\nip nat enable\nno shut\n", managedDeviceDatabase["R5"]])
-    #     executor.submit(lambda x: send_command(*x), ["conf t\nint g0/2\nno shut\nip address dhcp\nip nat enable", managedDeviceDatabase["R5"]])
-        # executor.submit(lambda x: send_command(*x), ["conf t\nip access-list standard NAT\npermit any", managedDeviceDatabase["R5"]])
-        # executor.submit(lambda x: send_command(*x), ["conf t\nip route vrf jab 0.0.0.0 0.0.0.0 g0/2 192.168.122.1", managedDeviceDatabase["R5"]])
-        # executor.submit(lambda x: send_command(*x), ["conf t\nip nat source list NAT int g0/2 vrf jab overload", managedDeviceDatabase["R5"]])
+    with concurrent.futures.ThreadPoolExecutor() as executor:
+        executor.submit(lambda x: send_command(*x), ["conf t\nvlan 69\nno shut\nname vrf-jab\n", managedDeviceDatabase["S1"]])
+        executor.submit(lambda x: send_command(*x), ["conf t\nint range g0/1-2\nsw tr enc dot\nsw mode tr\n", managedDeviceDatabase["S1"]])
+        executor.submit(lambda x: send_command(*x), ["conf t\nint g1/0\nsw acc vlan 69\n", managedDeviceDatabase["S1"]])
+        executor.submit(lambda x: send_command(*x), ["conf t\nvlan 69\nno shut\nname vrf-jab\n", managedDeviceDatabase["S2"]])
+        executor.submit(lambda x: send_command(*x), ["conf t\nint range g0/1-3\nsw tr enc dot\nsw mode tr\n", managedDeviceDatabase["S2"]])
+        executor.submit(lambda x: send_command(*x), ["conf t\nint g0/1.69\nip vrf forwarding jab\nenc dot 69\nip address 172.31.179.17 255.255.255.240\nint g0/1\nno shut\n", managedDeviceDatabase["R1"]])
+        executor.submit(lambda x: send_command(*x), ["conf t\nint g0/2.69\nip vrf forwarding jab\nenc dot 69\nip address 172.31.179.33 255.255.255.240\nint g0/2\nno shut\n", managedDeviceDatabase["R1"]])
+        executor.submit(lambda x: send_command(*x), ["conf t\nint g0/1.69\nip vrf forwarding jab\nenc dot 69\nip address 172.31.179.18 255.255.255.240\nint g0/1\nno shut\n", managedDeviceDatabase["R2"]])
+        executor.submit(lambda x: send_command(*x), ["conf t\nint g0/2.69\nip vrf forwarding jab\nenc dot 69\nip address 172.31.179.49 255.255.255.240\nint g0/2\nno shut\n", managedDeviceDatabase["R2"]])
+        executor.submit(lambda x: send_command(*x), ["conf t\nint g0/1.69\nip vrf forwarding jab\nenc dot 69\nip address 172.31.179.34 255.255.255.240\nint g0/1\nno shut\n", managedDeviceDatabase["R3"]])
+        executor.submit(lambda x: send_command(*x), ["conf t\nint g0/2.69\nip vrf forwarding jab\nenc dot 69\nip address 172.31.179.50 255.255.255.240\nint g0/2\nno shut\n", managedDeviceDatabase["R3"]])
+        executor.submit(lambda x: send_command(*x), ["conf t\nint g0/3.69\nip vrf forwarding jab\nenc dot 69\nip address 172.31.179.65 255.255.255.240\nint g0/3\nno shut\n", managedDeviceDatabase["R3"]])
+        executor.submit(lambda x: send_command(*x), ["conf t\nint g0/1.69\nip vrf forwarding jab\nenc dot 69\nip address 172.31.179.66 255.255.255.240\nint g0/1\nno shut\n", managedDeviceDatabase["R4"]])
+        executor.submit(lambda x: send_command(*x), ["conf t\nint g0/1.69\nip vrf forwarding jab\nenc dot 69\nip address 172.31.179.67 255.255.255.240\nint g0/1.69\nip nat enable\nno shut\n", managedDeviceDatabase["R5"]])
+        executor.submit(lambda x: send_command(*x), ["conf t\nint g0/2\nno shut\nip address dhcp\nip nat enable", managedDeviceDatabase["R5"]])
+        executor.submit(lambda x: send_command(*x), ["conf t\nip access-list standard NAT\npermit any", managedDeviceDatabase["R5"]])
+        executor.submit(lambda x: send_command(*x), ["conf t\nip route vrf jab 0.0.0.0 0.0.0.0 g0/2 192.168.122.1", managedDeviceDatabase["R5"]])
+        executor.submit(lambda x: send_command(*x), ["conf t\nip nat source list NAT int g0/2 vrf jab overload", managedDeviceDatabase["R5"]])
 
     # # Enable ospf on active interface
-    # with concurrent.futures.ThreadPoolExecutor() as executor:
-    #     workers = {executor.submit(managedDeviceDatabase[device].enable_routing, "OSPF") for device in managedDeviceDatabase}
-    # managedDeviceDatabase["R5"].enable_routing("OSPF", default_route=True)
-    # print(workers)
+    with concurrent.futures.ThreadPoolExecutor() as executor:
+        workers = {executor.submit(managedDeviceDatabase[device].enable_routing, "OSPF") for device in managedDeviceDatabase}
+    managedDeviceDatabase["R5"].enable_routing("OSPF", default_route=True)
+
 
     # Enable CDP and LLDP on device
-    # with concurrent.futures.ThreadPoolExecutor() as executor:
-    #     workers_lldp = {executor.submit(managedDeviceDatabase[device].enable_lldp()) for device in managedDeviceDatabase}
-    #     workers_cdp = {executor.submit(managedDeviceDatabase[device].enable_cdp()) for device in managedDeviceDatabase}
+    with concurrent.futures.ThreadPoolExecutor() as executor:
+        workers_lldp = {executor.submit(managedDeviceDatabase[device].enable_lldp()) for device in managedDeviceDatabase}
+        workers_cdp = {executor.submit(managedDeviceDatabase[device].enable_cdp()) for device in managedDeviceDatabase}
         
     # Labelling interfaces
-    # with concurrent.futures.ThreadPoolExecutor() as executor:
-    #     workers_label = {executor.submit(managedDeviceDatabase[device].label_interface) for device in managedDeviceDatabase}
-    # [print(line) for line in managedDeviceDatabase["R1"].label_interface()]
-    managedDeviceDatabase["R1"].label_interface()
+    with concurrent.futures.ThreadPoolExecutor() as executor:
+        workers_label = {executor.submit(managedDeviceDatabase[device].label_interface) for device in managedDeviceDatabase}
     
      
 def send_command(command, devices):
