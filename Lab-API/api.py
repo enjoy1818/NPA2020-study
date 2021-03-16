@@ -3,7 +3,9 @@ import datetime
 import time
 def main():
     command = ''
-    
+    webex_bearer_token = ""
+    webex_room_id = ""
+    weather_api_key = ""
     message_response = {}
     while command.lower() != "end":
         message = get_message(webex_bearer_token, webex_room_id)
