@@ -1,21 +1,29 @@
 # import requests
 from ncclient import manager
+import xmltodict
+import pprint
+import json
 def main():
-    mgr = manager.connect(host="10.0.15.196", port=830, username="admin", password="cisco", hostkey_verify=False)
+    mgr = manager.connect(host="10.0.15.196", port=430, username="admin", password="cisco", hostkey_verify=False)
     # for capability in mgr.server_capabilities:
     #     print(capability)
     
     netconf_loopback = """
-        <config>
-        <native xmlns="http://cisco.com/ns/yang/Cisco-IOS-XE-native">
-        <interface>
-        <Loopback operation="delete">
-        <name>2</name>
-        </Loopback>
-        </interface>
-        </native>
-        </config>
+        <filter>
+            <interfaces-state xmlns="urn:ietf:params:xml:ns:yang:ietf-interfaces" />
+        </filter>
     """
-    config = mgr.edit_config(target="running", config=netconf_loopback)
-    print(config)
+    netconf_filter = """
+        <filter>
+            <interfaces-state xmlns="urn:ietf:params:xml:ns:yang:ietf-interfaces">
+                <interface>
+                    <name>GigabitEthernet1</name>
+                </interface>
+            </interfaces-state>
+        </filter>
+    """
+    # config = mgr.edit_config(target="running", config=netconf_loopback)
+    data = mgr.get(filter=netconf_filter).data_xml
+    pprint.pprint(xmltodict.parse(data,dict_constructor=dict))
+    # print(data)
 main()
